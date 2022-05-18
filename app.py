@@ -96,12 +96,14 @@ def get_all_teams_():
 @app.route('/api/v1/instances/teams/<team_id>', methods=['GET'])
 def get_all_instances(team_id):
     instances = Instance.query.filter_by(team_id=team_id).all()
+    member = Members.query.filter_by(team_id=team_id).all()
+    deploy = Deploy.query.filter_by(member_id = member.member_id).all()
     output = []
     for instance in instances:
         instance_data = {}
         instance_data['instance_id'] = instance.instance_id
         instance_data['instance_name'] = instance.instance_name
-        instance_data['usage_type'] = instance.usage_type
+        instance_data[''] = instance.usage_type
         instance_data['team_id'] = instance.team_id
         instance_data['status'] = instance.status
         output.append(instance_data)
@@ -218,11 +220,18 @@ def get_all_teams_with_members():
 def create_team():
 
     data = request.get_json()
-    new_team = Teams(team_name = data['team_name'],owner = data['owner'],instances = data['instances'],modules_owned = data['modules_owned'] )
+    new_team = Teams(team_name = data['team_name'],owner = data['owner'],instances = data['instances'],modules_owned = data['modules_owned'])
     db.session.add(new_team)
     db.session.commit()
+    team_data = {}
+    team_data['team_name'] = data['team_name']
+    team_data['owner'] = data['owner']
+    team_data['instances'] = data['instances']
+    team_data['modules_owned'] = data['modules_owned']
+    team_data['team_id'] = new_team.team_id
 
-    return jsonify({'message':'New Team Created'})
+
+    return jsonify({'team':team_data})
 
 # View A Team
 @app.route('/api/v1/teams/<team_id>', methods=['GET'])
@@ -274,6 +283,7 @@ def create_member_to_team(team_id):
     member_data['email'] = new_member.email
     member_data['role'] = new_member.role
     member_data['permission_level'] = new_member.permission_level
+    member_data['member_id'] = new_member.member_id
 
 
     return jsonify({'member':member_data})
